@@ -1,0 +1,6 @@
+{
+  "name": "DiagOrg — Diagnóstico Organizacional & Entrevista com Gestores",
+  "description": "Plataforma corporativa para aplicação do Formulário de Diagnóstico Organizacional (Entrevista com Gestores), gestão de colaboradores com UID exclusivo de página web, empresas, setores e administração integrada ao Firebase.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

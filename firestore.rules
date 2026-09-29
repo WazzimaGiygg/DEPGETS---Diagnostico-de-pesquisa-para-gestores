@@ -1,0 +1,371 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net: Default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Primitive Helpers
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isMasterAdminEmail() {
+      return isVerifiedUser() && request.auth.token.email == 'mafersao1100@gmail.com';
+    }
+
+    function isAdmin() {
+      return isVerifiedUser() && (
+        isMasterAdminEmail() ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // Validation Blueprint: Collaborator
+    function isValidCollaborator(data) {
+      return data.keys().hasAll([
+        'id', 'webUid', 'firstName', 'lastName', 'email', 'emailHint', 'phone',
+        'age', 'birthDate', 'role', 'companyId', 'companyName', 'sectorId',
+        'sectorName', 'tenure', 'accountType', 'acceptedTerms', 'registeredDate',
+        'customFieldsMap', 'ownerId', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'id', 'webUid', 'firstName', 'lastName', 'email', 'emailHint', 'phone',
+        'age', 'birthDate', 'role', 'companyId', 'companyName', 'sectorId',
+        'sectorName', 'tenure', 'accountType', 'acceptedTerms', 'registeredDate',
+        'customFieldsMap', 'ownerId', 'createdAt', 'updatedAt'
+      ]) &&
+      data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$') &&
+      data.webUid is string && data.webUid.size() >= 3 && data.webUid.size() <= 64 && data.webUid.matches('^[a-zA-Z0-9_\\-]+$') &&
+      data.firstName is string && data.firstName.size() >= 1 && data.firstName.size() <= 100 &&
+      data.lastName is string && data.lastName.size() >= 1 && data.lastName.size() <= 100 &&
+      data.email is string && data.email.size() >= 3 && data.email.size() <= 150 &&
+      data.emailHint is string && data.emailHint.size() <= 200 &&
+      data.phone is string && data.phone.size() >= 8 && data.phone.size() <= 30 &&
+      data.age is number && data.age >= 18 && data.age <= 120 &&
+      data.birthDate is string && data.birthDate.size() <= 20 &&
+      data.role is string && data.role.size() >= 1 && data.role.size() <= 120 &&
+      data.companyId is string && data.companyId.size() <= 128 &&
+      data.companyName is string && data.companyName.size() >= 1 && data.companyName.size() <= 150 &&
+      data.sectorId is string && data.sectorId.size() <= 128 &&
+      data.sectorName is string && data.sectorName.size() >= 1 && data.sectorName.size() <= 150 &&
+      data.tenure is string && data.tenure.size() <= 80 &&
+      data.accountType is string && (data.accountType == 'google' || data.accountType == 'corporate') &&
+      data.acceptedTerms is bool && data.acceptedTerms == true &&
+      data.registeredDate is string && data.registeredDate.size() >= 1 && data.registeredDate.size() <= 30 &&
+      data.customFieldsMap is map && data.customFieldsMap.size() <= 25 &&
+      data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 &&
+      data.ownerId == request.auth.uid &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    // Validation Blueprint: Company
+    function isValidCompany(data) {
+      return data.keys().hasAll([
+        'id', 'name', 'cnpj', 'segment', 'cityState', 'registeredDate', 'ownerId', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'id', 'name', 'cnpj', 'segment', 'cityState', 'registeredDate', 'ownerId', 'createdAt', 'updatedAt'
+      ]) &&
+      data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$') &&
+      data.name is string && data.name.size() >= 1 && data.name.size() <= 150 &&
+      data.cnpj is string && data.cnpj.size() >= 1 && data.cnpj.size() <= 30 &&
+      data.segment is string && data.segment.size() >= 1 && data.segment.size() <= 100 &&
+      data.cityState is string && data.cityState.size() <= 100 &&
+      data.registeredDate is string && data.registeredDate.size() >= 1 && data.registeredDate.size() <= 30 &&
+      data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 &&
+      data.ownerId == request.auth.uid &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    // Validation Blueprint: Sector
+    function isValidSector(data) {
+      return data.keys().hasAll([
+        'id', 'name', 'companyId', 'companyName', 'managerName', 'headcount',
+        'pressureLevel', 'registeredDate', 'ownerId', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'id', 'name', 'companyId', 'companyName', 'managerName', 'headcount',
+        'pressureLevel', 'registeredDate', 'ownerId', 'createdAt', 'updatedAt'
+      ]) &&
+      data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$') &&
+      data.name is string && data.name.size() >= 1 && data.name.size() <= 150 &&
+      data.companyId is string && data.companyId.size() >= 1 && data.companyId.size() <= 128 &&
+      data.companyName is string && data.companyName.size() >= 1 && data.companyName.size() <= 150 &&
+      data.managerName is string && data.managerName.size() >= 1 && data.managerName.size() <= 150 &&
+      data.headcount is number && data.headcount >= 0 && data.headcount <= 100000 &&
+      data.pressureLevel is string && (
+        data.pressureLevel == 'Baixo' ||
+        data.pressureLevel == 'Moderado' ||
+        data.pressureLevel == 'Alto' ||
+        data.pressureLevel == 'Crítico'
+      ) &&
+      data.registeredDate is string && data.registeredDate.size() >= 1 && data.registeredDate.size() <= 30 &&
+      data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 &&
+      data.ownerId == request.auth.uid &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    // Validation Blueprint: InterviewResponse
+    function isValidInterview(data) {
+      return data.keys().hasAll([
+        'id', 'collaboratorId', 'collaboratorWebUid', 'managerName', 'roleSector',
+        'companyName', 'interviewDate', 'tenure', 'q1DemandsAndPressure',
+        'q2TaskDistribution', 'q3FrequentConflicts', 'q4ComplaintsHandling',
+        'q5SignificantChanges', 'q6AttentionIndicators', 'q7PreventiveMeasures',
+        'extraAnswersMap', 'ownerId', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'id', 'collaboratorId', 'collaboratorWebUid', 'managerName', 'roleSector',
+        'companyName', 'interviewDate', 'tenure', 'q1DemandsAndPressure',
+        'q2TaskDistribution', 'q3FrequentConflicts', 'q4ComplaintsHandling',
+        'q5SignificantChanges', 'q6AttentionIndicators', 'q7PreventiveMeasures',
+        'extraAnswersMap', 'ownerId', 'createdAt', 'updatedAt'
+      ]) &&
+      data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$') &&
+      data.collaboratorId is string && data.collaboratorId.size() <= 128 &&
+      data.collaboratorWebUid is string && data.collaboratorWebUid.size() >= 1 && data.collaboratorWebUid.size() <= 64 &&
+      data.managerName is string && data.managerName.size() >= 1 && data.managerName.size() <= 150 &&
+      data.roleSector is string && data.roleSector.size() >= 1 && data.roleSector.size() <= 150 &&
+      data.companyName is string && data.companyName.size() >= 1 && data.companyName.size() <= 150 &&
+      data.interviewDate is string && data.interviewDate.size() >= 1 && data.interviewDate.size() <= 30 &&
+      data.tenure is string && data.tenure.size() >= 1 && data.tenure.size() <= 80 &&
+      data.q1DemandsAndPressure is string && data.q1DemandsAndPressure.size() <= 4000 &&
+      data.q2TaskDistribution is string && data.q2TaskDistribution.size() <= 4000 &&
+      data.q3FrequentConflicts is string && data.q3FrequentConflicts.size() <= 4000 &&
+      data.q4ComplaintsHandling is string && data.q4ComplaintsHandling.size() <= 4000 &&
+      data.q5SignificantChanges is string && data.q5SignificantChanges.size() <= 4000 &&
+      data.q6AttentionIndicators is string && data.q6AttentionIndicators.size() <= 4000 &&
+      data.q7PreventiveMeasures is string && data.q7PreventiveMeasures.size() <= 4000 &&
+      data.extraAnswersMap is map && data.extraAnswersMap.size() <= 30 &&
+      data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 &&
+      data.ownerId == request.auth.uid &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    // Validation Blueprint: AdminMember
+    function isValidAdminMember(data) {
+      return data.keys().hasAll([
+        'id', 'identifierType', 'googleUid', 'corporateEmail', 'displayName',
+        'sectorRole', 'registeredDate', 'ownerId', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'id', 'identifierType', 'googleUid', 'corporateEmail', 'displayName',
+        'sectorRole', 'registeredDate', 'ownerId', 'createdAt', 'updatedAt'
+      ]) &&
+      data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$') &&
+      data.identifierType is string && (data.identifierType == 'google_uid' || data.identifierType == 'corporate_email') &&
+      data.googleUid is string && data.googleUid.size() <= 128 &&
+      data.corporateEmail is string && data.corporateEmail.size() <= 150 &&
+      data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 150 &&
+      data.sectorRole is string && data.sectorRole.size() >= 1 && data.sectorRole.size() <= 100 &&
+      data.registeredDate is string && data.registeredDate.size() >= 1 && data.registeredDate.size() <= 30 &&
+      data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 &&
+      data.ownerId == request.auth.uid &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    // Validation Blueprint: SystemConfig
+    function isValidSystemConfig(data) {
+      return data.keys().hasAll([
+        'id', 'formTitle', 'formSubtitle', 'chromePriorityNotice',
+        'pushNotificationsEnabled', 'customQuestionsCount', 'customFieldsCount',
+        'ownerId', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'id', 'formTitle', 'formSubtitle', 'chromePriorityNotice',
+        'pushNotificationsEnabled', 'customQuestionsCount', 'customFieldsCount',
+        'ownerId', 'createdAt', 'updatedAt'
+      ]) &&
+      data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$') &&
+      data.formTitle is string && data.formTitle.size() >= 1 && data.formTitle.size() <= 150 &&
+      data.formSubtitle is string && data.formSubtitle.size() >= 1 && data.formSubtitle.size() <= 200 &&
+      data.chromePriorityNotice is string && data.chromePriorityNotice.size() >= 1 && data.chromePriorityNotice.size() <= 500 &&
+      data.pushNotificationsEnabled is bool &&
+      data.customQuestionsCount is number && data.customQuestionsCount >= 0 && data.customQuestionsCount <= 100 &&
+      data.customFieldsCount is number && data.customFieldsCount >= 0 && data.customFieldsCount <= 100 &&
+      data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 &&
+      data.ownerId == request.auth.uid &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    // Collection: /collaborators/{collaboratorId} (Contains PII: strictly restricted to owner or Admin)
+    match /collaborators/{collaboratorId} {
+      allow get: if isSignedIn() && isValidId(collaboratorId) && (existing().ownerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isMasterAdminEmail());
+      allow create: if isVerifiedUser() && isValidId(collaboratorId) &&
+        isValidCollaborator(incoming()) &&
+        incoming().id == collaboratorId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser() && isValidId(collaboratorId) &&
+        isValidCollaborator(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          isAdmin() ||
+          (existing().ownerId == request.auth.uid &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'firstName', 'lastName', 'email', 'emailHint', 'phone', 'age',
+              'birthDate', 'role', 'companyId', 'companyName', 'sectorId',
+              'sectorName', 'tenure', 'customFieldsMap', 'updatedAt'
+            ])
+          )
+        );
+      allow delete: if isVerifiedUser() && isValidId(collaboratorId) && (existing().ownerId == request.auth.uid || isAdmin());
+    }
+
+    // Collection: /companies/{companyId}
+    match /companies/{companyId} {
+      allow get: if isSignedIn() && isValidId(companyId) && (existing().ownerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isMasterAdminEmail());
+      allow create: if isVerifiedUser() && isValidId(companyId) &&
+        isValidCompany(incoming()) &&
+        incoming().id == companyId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser() && isValidId(companyId) &&
+        isValidCompany(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          isAdmin() ||
+          (existing().ownerId == request.auth.uid &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'name', 'cnpj', 'segment', 'cityState', 'updatedAt'
+            ])
+          )
+        );
+      allow delete: if isVerifiedUser() && isValidId(companyId) && (existing().ownerId == request.auth.uid || isAdmin());
+    }
+
+    // Collection: /sectors/{sectorId}
+    match /sectors/{sectorId} {
+      allow get: if isSignedIn() && isValidId(sectorId) && (existing().ownerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isMasterAdminEmail());
+      allow create: if isVerifiedUser() && isValidId(sectorId) &&
+        isValidSector(incoming()) &&
+        incoming().id == sectorId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        exists(/databases/$(database)/documents/companies/$(incoming().companyId));
+      allow update: if isVerifiedUser() && isValidId(sectorId) &&
+        isValidSector(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          isAdmin() ||
+          (existing().ownerId == request.auth.uid &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'name', 'companyId', 'companyName', 'managerName', 'headcount', 'pressureLevel', 'updatedAt'
+            ])
+          )
+        );
+      allow delete: if isVerifiedUser() && isValidId(sectorId) && (existing().ownerId == request.auth.uid || isAdmin());
+    }
+
+    // Collection: /interviews/{interviewId}
+    match /interviews/{interviewId} {
+      allow get: if isSignedIn() && isValidId(interviewId) && (existing().ownerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isMasterAdminEmail());
+      allow create: if isVerifiedUser() && isValidId(interviewId) &&
+        isValidInterview(incoming()) &&
+        incoming().id == interviewId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser() && isValidId(interviewId) &&
+        isValidInterview(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          isAdmin() ||
+          (existing().ownerId == request.auth.uid &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'managerName', 'roleSector', 'companyName', 'interviewDate', 'tenure',
+              'q1DemandsAndPressure', 'q2TaskDistribution', 'q3FrequentConflicts',
+              'q4ComplaintsHandling', 'q5SignificantChanges', 'q6AttentionIndicators',
+              'q7PreventiveMeasures', 'extraAnswersMap', 'updatedAt'
+            ])
+          )
+        );
+      allow delete: if isVerifiedUser() && isValidId(interviewId) && (existing().ownerId == request.auth.uid || isAdmin());
+    }
+
+    // Collection: /admins/{adminId}
+    match /admins/{adminId} {
+      allow get: if isSignedIn() && isValidId(adminId) && (existing().ownerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isMasterAdminEmail());
+      allow create: if isVerifiedUser() && isValidId(adminId) &&
+        isValidAdminMember(incoming()) &&
+        incoming().id == adminId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        isAdmin();
+      allow update: if isVerifiedUser() && isValidId(adminId) &&
+        isValidAdminMember(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        isAdmin() &&
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'displayName', 'sectorRole', 'googleUid', 'corporateEmail', 'updatedAt'
+        ]);
+      allow delete: if isVerifiedUser() && isValidId(adminId) && isAdmin();
+    }
+
+    // Collection: /settings/{settingId}
+    match /settings/{settingId} {
+      allow get: if isSignedIn() && isValidId(settingId) && (existing().ownerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isMasterAdminEmail());
+      allow create: if isVerifiedUser() && isValidId(settingId) &&
+        isValidSystemConfig(incoming()) &&
+        incoming().id == settingId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser() && isValidId(settingId) &&
+        isValidSystemConfig(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          isAdmin() ||
+          (existing().ownerId == request.auth.uid &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'formTitle', 'formSubtitle', 'chromePriorityNotice',
+              'pushNotificationsEnabled', 'customQuestionsCount', 'customFieldsCount', 'updatedAt'
+            ])
+          )
+        );
+      allow delete: if isVerifiedUser() && isValidId(settingId) && isAdmin();
+    }
+  }
+}

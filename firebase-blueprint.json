@@ -1,0 +1,418 @@
+{
+  "entities": {
+    "Collaborator": {
+      "title": "Collaborator",
+      "description": "Colaborador cadastrado no sistema com UID exclusivo de página web, empresa, setor e campos personalizados.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "webUid": {
+          "type": "string",
+          "description": "UID exclusivo de página WEB para cada colaborador cadastrado",
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "firstName": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "lastName": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "maxLength": 150
+        },
+        "emailHint": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "phone": {
+          "type": "string",
+          "maxLength": 30
+        },
+        "age": {
+          "type": "number",
+          "description": "Idade obrigatória maior ou igual a 18 anos"
+        },
+        "birthDate": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "role": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "companyId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "companyName": {
+          "type": "string",
+          "maxLength": 150
+        },
+        "sectorId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "sectorName": {
+          "type": "string",
+          "maxLength": 150
+        },
+        "tenure": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "accountType": {
+          "type": "string",
+          "enum": ["google", "corporate"],
+          "maxLength": 20
+        },
+        "acceptedTerms": {
+          "type": "boolean"
+        },
+        "registeredDate": {
+          "type": "string",
+          "maxLength": 30
+        },
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "webUid",
+        "firstName",
+        "lastName",
+        "email",
+        "phone",
+        "age",
+        "role",
+        "companyName",
+        "sectorName",
+        "accountType",
+        "acceptedTerms",
+        "registeredDate",
+        "ownerId"
+      ]
+    },
+    "Company": {
+      "title": "Company",
+      "description": "Empresa cadastrada no diagnóstico organizacional.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 150
+        },
+        "cnpj": {
+          "type": "string",
+          "maxLength": 30
+        },
+        "segment": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "cityState": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "registeredDate": {
+          "type": "string",
+          "maxLength": 30
+        },
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "name", "cnpj", "segment", "registeredDate", "ownerId"]
+    },
+    "Sector": {
+      "title": "Sector",
+      "description": "Setor cadastrado vinculado a uma empresa.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 150
+        },
+        "companyId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "companyName": {
+          "type": "string",
+          "maxLength": 150
+        },
+        "managerName": {
+          "type": "string",
+          "maxLength": 150
+        },
+        "headcount": {
+          "type": "number"
+        },
+        "pressureLevel": {
+          "type": "string",
+          "enum": ["Baixo", "Moderado", "Alto", "Crítico"],
+          "maxLength": 30
+        },
+        "registeredDate": {
+          "type": "string",
+          "maxLength": 30
+        },
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "name", "companyId", "companyName", "managerName", "registeredDate", "ownerId"]
+    },
+    "InterviewResponse": {
+      "title": "InterviewResponse",
+      "description": "Respostas gravadas do Formulário de Diagnóstico Organizacional - Entrevista com Gestores.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "collaboratorId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "collaboratorWebUid": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "managerName": {
+          "type": "string",
+          "maxLength": 150
+        },
+        "roleSector": {
+          "type": "string",
+          "maxLength": 150
+        },
+        "companyName": {
+          "type": "string",
+          "maxLength": 150
+        },
+        "interviewDate": {
+          "type": "string",
+          "maxLength": 30
+        },
+        "tenure": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "q1DemandsAndPressure": {
+          "type": "string",
+          "maxLength": 4000
+        },
+        "q2TaskDistribution": {
+          "type": "string",
+          "maxLength": 4000
+        },
+        "q3FrequentConflicts": {
+          "type": "string",
+          "maxLength": 4000
+        },
+        "q4ComplaintsHandling": {
+          "type": "string",
+          "maxLength": 4000
+        },
+        "q5SignificantChanges": {
+          "type": "string",
+          "maxLength": 4000
+        },
+        "q6AttentionIndicators": {
+          "type": "string",
+          "maxLength": 4000
+        },
+        "q7PreventiveMeasures": {
+          "type": "string",
+          "maxLength": 4000
+        },
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "collaboratorWebUid",
+        "managerName",
+        "roleSector",
+        "companyName",
+        "interviewDate",
+        "tenure",
+        "q1DemandsAndPressure",
+        "q2TaskDistribution",
+        "q3FrequentConflicts",
+        "q4ComplaintsHandling",
+        "q5SignificantChanges",
+        "q6AttentionIndicators",
+        "q7PreventiveMeasures",
+        "ownerId"
+      ]
+    },
+    "AdminMember": {
+      "title": "AdminMember",
+      "description": "Registro do Setor de Administração adicionado pelo UID Google ou pelo e-mail corporativo.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "identifierType": {
+          "type": "string",
+          "enum": ["google_uid", "corporate_email"],
+          "maxLength": 30
+        },
+        "googleUid": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "corporateEmail": {
+          "type": "string",
+          "maxLength": 150
+        },
+        "displayName": {
+          "type": "string",
+          "maxLength": 150
+        },
+        "sectorRole": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "registeredDate": {
+          "type": "string",
+          "maxLength": 30
+        },
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "identifierType", "displayName", "sectorRole", "registeredDate", "ownerId"]
+    },
+    "SystemConfig": {
+      "title": "SystemConfig",
+      "description": "Configurações dinâmicas do formulário e campos adicionais de colaboradores modificáveis pelo desenvolvedor.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "formTitle": {
+          "type": "string",
+          "maxLength": 150
+        },
+        "formSubtitle": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "chromePriorityNotice": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "pushNotificationsEnabled": {
+          "type": "boolean"
+        },
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "formTitle", "formSubtitle", "chromePriorityNotice", "pushNotificationsEnabled", "ownerId"]
+    }
+  },
+  "firestore": {
+    "/collaborators/{collaboratorId}": {
+      "schema": { "$ref": "#/entities/Collaborator" },
+      "description": "Colaboradores cadastrados com UID exclusivo de página web e dados corporativos."
+    },
+    "/companies/{companyId}": {
+      "schema": { "$ref": "#/entities/Company" },
+      "description": "Empresas cadastradas no sistema."
+    },
+    "/sectors/{sectorId}": {
+      "schema": { "$ref": "#/entities/Sector" },
+      "description": "Setores cadastrados vinculados às empresas."
+    },
+    "/interviews/{interviewId}": {
+      "schema": { "$ref": "#/entities/InterviewResponse" },
+      "description": "Respostas gravadas do Formulário de Entrevista com Gestores (Diagnóstico Organizacional)."
+    },
+    "/admins/{adminId}": {
+      "schema": { "$ref": "#/entities/AdminMember" },
+      "description": "Membros do setor de administração adicionados via UID Google ou e-mail corporativo."
+    },
+    "/settings/{settingId}": {
+      "schema": { "$ref": "#/entities/SystemConfig" },
+      "description": "Configurações globais e estrutura customizável do formulário de entrevista e colaboradores."
+    }
+  }
+}
